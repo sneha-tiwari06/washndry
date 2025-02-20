@@ -6,6 +6,6 @@ const router = express.Router();
 
 // POST request to place an order
 router.post("/orders", authMiddleware, createOrder);
-
+router.get("/orders", authMiddleware, getUserOrders);
 
 module.exports = router;
