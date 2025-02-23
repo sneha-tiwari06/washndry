@@ -5,7 +5,7 @@ const orderSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId, // Reference to User model
       required: true,
-      ref: "User", // Assuming you have a User model
+      ref: "User",
     },
     selectedItems: {
       type: String, // Stored as a stringified JSON for flexibility
@@ -27,6 +27,17 @@ const orderSchema = new mongoose.Schema(
       pincode: { type: Number, required: true },
       city: { type: String, required: true },
       state: { type: String, required: true },
+    },
+    status: {
+      type: String,
+      default: "Ordered",
+      enum: ["Ordered", "Shipped", "Delivered", "Cancelled"],
+      immutable: true, 
+    },
+    deliveryDate: {
+      type: Date,
+      default: () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), 
+      immutable: true, 
     },
   },
   { timestamps: true }

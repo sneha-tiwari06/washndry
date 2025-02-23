@@ -1,9 +1,7 @@
 const Order = require("../model/orderModel");
-const { authMiddleware } = require("../middleware/auth");
 
 exports.createOrder = async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: "Unauthorized. Please log in." });
     }
@@ -17,7 +15,7 @@ exports.createOrder = async (req, res) => {
     const itemsStringified = typeof selectedItems === "object" ? JSON.stringify(selectedItems) : selectedItems;
 
     const newOrder = new Order({
-      userId: req.user.userId,  // Associate order with user
+      userId: req.user.userId,
       selectedItems: itemsStringified,
       selectedDate,
       selectedTimeSlot,
@@ -32,6 +30,7 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 exports.getUserOrders = async (req, res) => {
   try {
     if (!req.user || !req.user.userId) {
@@ -44,7 +43,14 @@ exports.getUserOrders = async (req, res) => {
       return res.status(404).json({ message: "No orders found." });
     }
 
-    res.status(200).json({ orders });
+    // Convert Mongoose documents to plain objects before modifying
+    const modifiedOrders = orders.map(order => ({
+      ...order.toObject(),
+      status: order.status || "Ordered", // Ensure default value
+      deliveryDate: order.deliveryDate || new Date(order.createdAt.getTime() + 5 * 24 * 60 * 60 * 1000), // Ensure 5-day addition
+    }));
+
+    res.status(200).json({ orders: modifiedOrders });
 
   } catch (error) {
     console.error("Error fetching orders:", error);
