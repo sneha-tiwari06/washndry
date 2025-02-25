@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // Register a new user
+// Register a new user
 exports.register = async (req, res) => {
   try {
     const { phoneNumber, password, confirmPassword } = req.body;
@@ -19,8 +20,11 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // 🔹 Explicitly hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Create new user
-    const user = new User({ phoneNumber, password });
+    const user = new User({ phoneNumber, password: hashedPassword }); // 🔹 Store hashed password
     await user.save();
 
     res.status(201).json({ message: 'User registered successfully' });
@@ -28,6 +32,7 @@ exports.register = async (req, res) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
 
 // Login user
 exports.login = async (req, res) => {
@@ -42,6 +47,7 @@ exports.login = async (req, res) => {
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
+    // console.log("Password Match Status:", isMatch);  // 🔹 Debugging line
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -94,7 +100,7 @@ exports.resetPassword = async (req, res) => {
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
+    // console.log("New Hashed Password:", hashedPassword);  // 🔹 Debugging line
     // Update password in database
     user.password = hashedPassword;
     await user.save();
