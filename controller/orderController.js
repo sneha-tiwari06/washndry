@@ -2,21 +2,53 @@ const Order = require("../model/orderModel");
 
 exports.createOrder = async (req, res) => {
   try {
+    // Check if user is authenticated
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: "Unauthorized. Please log in." });
     }
 
     const { selectedItems, selectedDate, selectedTimeSlot, address } = req.body;
 
+    // Validate required fields
     if (!selectedItems || !selectedDate || !selectedTimeSlot || !address) {
       return res.status(400).json({ error: "All fields are required." });
     }
 
-    const itemsStringified = typeof selectedItems === "object" ? JSON.stringify(selectedItems) : selectedItems;
+    // Parse selectedItems if it's a string
+    let itemsArray = typeof selectedItems === "string" ? JSON.parse(selectedItems) : selectedItems;
 
+    // Ensure selectedItems is an array
+    if (!Array.isArray(itemsArray)) {
+      return res.status(400).json({ error: "Invalid items format." });
+    }
+
+    // Filter out items with zero quantity
+    const validItems = itemsArray.filter(item => item.quantity > 0);
+
+    if (validItems.length === 0) {
+      return res.status(400).json({ error: "No valid items selected." });
+    }
+
+    // Calculate total amount
+    const totalAmount = validItems.reduce((acc, item) => {
+      if (!item.cost || !item.quantity || isNaN(item.cost) || isNaN(item.quantity)) {
+        console.error("Invalid item data:", item);
+        return acc;
+      }
+      return acc + (item.cost * item.quantity);
+    }, 0);
+
+    // Validate totalAmount
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+      return res.status(400).json({ error: "Invalid total amount calculation." });
+    }
+
+    // Create new order
     const newOrder = new Order({
-      userId: req.user.userId,
-      selectedItems: itemsStringified,
+      userId: req.user.userId,   // Ensure order is linked to user
+      selectedItems: validItems, // Store only valid items
+      totalAmount,
+      totalItems: validItems.length,
       selectedDate,
       selectedTimeSlot,
       address,
@@ -30,6 +62,8 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
 
 exports.getUserOrders = async (req, res) => {
   try {

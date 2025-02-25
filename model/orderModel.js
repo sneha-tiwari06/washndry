@@ -3,13 +3,27 @@ const mongoose = require("mongoose");
 const orderSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId, // Reference to User model
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "User",
     },
-    selectedItems: {
-      type: String, // Stored as a stringified JSON for flexibility
+    selectedItems: [
+      {
+        name: String,
+        cost: Number,
+        snapshot: String,
+        quantity: Number,
+      }
+    ],
+    totalAmount: {
+      type: Number,
       required: true,
+      default: 0,
+    },
+    totalItems: {
+      type: Number,
+      required: true,
+      default: 0,
     },
     selectedDate: {
       type: String,
@@ -32,12 +46,12 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "Ordered",
       enum: ["Ordered", "Shipped", "Delivered", "Cancelled"],
-      immutable: true, 
+      immutable: true,
     },
     deliveryDate: {
       type: Date,
-      default: () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), 
-      immutable: true, 
+      default: () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      immutable: true,
     },
   },
   { timestamps: true }
