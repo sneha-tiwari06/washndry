@@ -56,3 +56,51 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+// Check if phone number exists
+exports.checkPhoneNumberExists = async (req, res) => {
+  try {
+    const { phoneNumber } = req.query;
+
+    if (!phoneNumber) {
+      return res.status(400).json({ message: 'Phone number is required' });
+    }
+
+    const user = await User.findOne({ phoneNumber });
+
+    if (user) {
+      return res.status(200).json({ exists: true });
+    } else {
+      return res.status(404).json({ exists: false, message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+// Reset password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { phoneNumber, newPassword } = req.body;
+
+    if (!phoneNumber || !newPassword) {
+      return res.status(400).json({ message: 'Phone number and new password are required' });
+    }
+
+    const user = await User.findOne({ phoneNumber });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
