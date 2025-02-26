@@ -91,3 +91,30 @@ exports.getUserOrders = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+exports.deleteOrder = async (req, res) => {
+  try {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ error: "Unauthorized. Please log in." });
+    }
+
+    const { orderId } = req.params;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Order ID is required." });
+    }
+
+    const order = await Order.findOne({ _id: orderId, userId: req.user.userId });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found or unauthorized access." });
+    }
+
+    await Order.findByIdAndDelete(orderId);
+
+    res.status(200).json({ message: "Order deleted successfully." });
+
+  } catch (error) {
+    console.error("Order Deletion Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
