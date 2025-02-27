@@ -7,10 +7,10 @@ exports.createOrder = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized. Please log in." });
     }
 
-    const { selectedItems, selectedDate, selectedTimeSlot, address } = req.body;
+    const { selectedItems, selectedDate, selectedTimeSlot, address, totalAmount, totalItems } = req.body;
 
     // Validate required fields
-    if (!selectedItems || !selectedDate || !selectedTimeSlot || !address) {
+    if (!selectedItems || !selectedDate || !selectedTimeSlot || !address || !totalAmount || !totalItems) {
       return res.status(400).json({ error: "All fields are required." });
     }
 
@@ -29,26 +29,12 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ error: "No valid items selected." });
     }
 
-    // Calculate total amount
-    const totalAmount = validItems.reduce((acc, item) => {
-      if (!item.cost || !item.quantity || isNaN(item.cost) || isNaN(item.quantity)) {
-        console.error("Invalid item data:", item);
-        return acc;
-      }
-      return acc + (item.cost * item.quantity);
-    }, 0);
-
-    // Validate totalAmount
-    if (isNaN(totalAmount) || totalAmount <= 0) {
-      return res.status(400).json({ error: "Invalid total amount calculation." });
-    }
-
     // Create new order
     const newOrder = new Order({
       userId: req.user.userId,   // Ensure order is linked to user
       selectedItems: validItems, // Store only valid items
       totalAmount,
-      totalItems: validItems.length,
+      totalItems,
       selectedDate,
       selectedTimeSlot,
       address,
@@ -62,8 +48,6 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
 
 exports.getUserOrders = async (req, res) => {
   try {
@@ -91,6 +75,8 @@ exports.getUserOrders = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
 exports.deleteOrder = async (req, res) => {
   try {
     if (!req.user || !req.user.userId) {
@@ -118,3 +104,4 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
